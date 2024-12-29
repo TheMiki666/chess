@@ -1,5 +1,4 @@
 #Abstract class which the Chess Pieces Inherit
-#require_relative "board"
 
 module Chess
   class Piece

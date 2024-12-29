@@ -2,7 +2,7 @@ require_relative "board"
 require_relative "piece"
 
 module Chess
-  class Bishop < Piece
+  class Bishop < Chess::Piece
 
   end
 end
