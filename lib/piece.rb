@@ -1,61 +1,49 @@
 #Abstract class which the Chess Pieces Inherit
+#require_relative "board"
+
 module Chess
   class Piece
     ORD_CONSTANT = 96
 
-    attr_reader :color, :row
+    attr_reader :color, :row, :col
 
-    def initialize(color, square)
+    def initialize(color, col, row)
       raise TypeError.new "#{self.class} color is #{color}, when must be 0 (white) or 1 (black)" if color != 0 && color !=1
-      situate_directly(square)
+      situate_directly(col, row)
       @color = color
     end
 
-    def col
+    def col_letter
       return -1 if @col == -1
       (@col + ORD_CONSTANT).chr
     end
-
-    def col_num
-      @col
-    end
-
 
     def be_captured
       @row = -1
       @col = -1
     end
 
-    def can_move?(square)
+    def can_move?(col, row, board)
       raise NotImplementedError.new "#{self.class} has not implemented method can_move?"
     end
 
-    def move(square)
+    def move(col, row, board)
       raise NotImplementedError.new "#{self.class} has not implemented method move"
     end
 
-    def situate_directly(square)
-      my_square = filter_square(square)
-      @col = my_square[0]
-      @row = my_square[1]
+    def situate_directly(col, row)
+      filter_square(col, row)
+      @col = col
+      @row = row
     end
 
-    private 
+    protected 
 
-    def filter_square(square)
-      error = false
-      if !square.is_a?(String) || square.length != 2 
-        error = true
-      else
-        col = square[0].downcase
-        row = square[1].to_i
-        if !row.is_a?(Integer) || row < 1 || row > 8 || col < 'a' || col > 'h'
-          error = true
-        else
-          return [col.ord - ORD_CONSTANT, row]
-        end
-      end
-      raise TypeError.new "#{self.class} square is #{square}, when must be 'a1' to 'h8'" if error
+    def filter_square(col, row)
+      raise TypeError.new "#{self.class} row is #{row}, when must be an Integer" if !row.is_a?(Integer)
+      raise TypeError.new "#{self.class} col is #{col}, when must be an Integer" if !col.is_a?(Integer)
+      raise TypeError.new "#{self.class} row is #{row}, when must be between 1 and 8" if !row.between?(1,8)
+      raise TypeError.new "#{self.class} col is #{col}, when must be between 1 and 8" if !col.between?(1,8)
     end
   end
 end
