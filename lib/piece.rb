@@ -44,5 +44,17 @@ module Chess
       raise TypeError.new "#{self.class} row is #{row}, when must be between 1 and 8" if !row.between?(1,8)
       raise TypeError.new "#{self.class} col is #{col}, when must be between 1 and 8" if !col.between?(1,8)
     end
+
+    #Returns true when the square is empty
+    #False if the square has a piece of the same color
+    #"e" if the square has an enemy piece
+    def free_square?(col, row, board)
+      return false if @col == col && @row == row
+      square = board.get_piece(col, row)
+      return true if square.nil? 
+      return "e" if square.color != @color
+      false
+    end
+
   end
 end

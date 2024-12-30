@@ -17,52 +17,32 @@ module Chess
       can_move = true
       if col > @col #moves right
         (@col + 1 .. col).each do |y|       
-          square = board.get_piece(y, row)   
-          if !square.nil?
-            if square.color == color # There is a piece of the same color in the way
-              can_move = false
-            elsif y != col # There is a enemy piece in the way, but it is not the last square
-              can_move = false
-            end
+          if !free_square?(y, row, board) || (free_square?(y, row, board) == "e" && y != col)
+            can_move = false
             break
           end
         end
       elsif col < @col #moves left
         y = @col - 1
-        while y >= col    
-          square = board.get_piece(y, row)   
-          if !square.nil?
-            if square.color == color # There is a piece of the same color in the way
-              can_move = false
-            elsif y != col # There is a enemy piece in the way, but it is not the last square
-              can_move = false
-            end
+        while y >= col      
+          if !free_square?(y, row, board) || (free_square?(y, row, board) == "e" && y != col)
+            can_move = false
             break
           end
           y -= 1
         end
       elsif row > @row #moves up
-        (@row + 1 .. row).each do |x|       
-          square =  board.get_piece(col, x)   
-          if !square.nil?
-            if square.color == color # There is a piece of the same color in the way
-              can_move = false
-            elsif x != row # There is a enemy piece in the way, but it is not the last square
-              can_move = false
-            end
+        (@row + 1 .. row).each do |x|         
+          if !free_square?(col, x, board) || (free_square?(col, x, board) == "e" && x != row)
+            can_move = false
             break
           end
         end
       else # row < @row #moves down
         x = @row - 1
         while x >= row    
-          square = board.get_piece(col, x)   
-          if !square.nil?
-            if square.color == color # There is a piece of the same color in the way
-              can_move = false
-            elsif x != row # There is a enemy piece in the way, but it is not the last square
-              can_move = false
-            end
+          if !free_square?(col, x, board) || (free_square?(col, x, board) == "e" && x != row)
+            can_move = false
             break
           end
           x -= 1
