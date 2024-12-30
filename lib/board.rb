@@ -9,7 +9,7 @@ require "colorize"
 
 module Chess
   class Board
-    #UNICODE_BASE = "\u256"
+    attr_reader :squares
 
     def initialize()
       clear_board
@@ -32,29 +32,82 @@ module Chess
       @movement = 1
     end
 
+    def spawn_new_piece (piece, color, col, row)
+      raise TypeError.new "#{self.class} piece is #{piece}, when must be 'K','Q','R','B','N' or 'P'"  if !piece.is_a?(String)
+      piece = piece.upcase
+      new_piece = nil
+      case piece 
+      when 'K'
+        new_piece = Chess::King.new(color, col, row)
+      when 'Q'
+        new_piece = Chess::Queen.new(color, col, row)
+      when 'R'
+        new_piece = Chess::Rook.new(color, col, row)
+      when 'B'
+        new_piece = Chess::Bishop.new(color, col, row)
+      when 'N'
+        new_piece = Chess::Knight.new(color, col, row)
+      when 'P'
+        new_piece = Chess::Pawn.new(color, col, row)
+      else
+        raise TypeError.new "#{self.class} piece is #{piece}, when must be 'K','Q','R','B','N' or 'P'" 
+      end  
+      remove_piece(col, row)
+      @squares[col-1][row-1] = new_piece    
+    end
+
+    def remove_piece(col, row)
+      raise TypeError.new "#{self.class} col is #{col}, when must be between 1-8" if !col.between?(1,8) 
+      raise TypeError.new "#{self.class} row is #{row}, when must be between 1-8" if !row.between?(1,8) 
+      col -= 1
+      row -= 1
+      if @squares[col][row].is_a?(Chess::Piece)
+        @squares[col][row].be_captured
+        @squares[col][row] = nil
+      end
+    end
+
+    def change_position(col1, row1, col2, row2)
+      raise TypeError.new "#{self.class} col1 is #{col1}, when must be between 1-8" if !col1.between?(1,8) 
+      raise TypeError.new "#{self.class} row1 is #{row1}, when must be between 1-8" if !row1.between?(1,8) 
+      raise TypeError.new "#{self.class} col2 is #{col2}, when must be between 1-8" if !col2.between?(1,8) 
+      raise TypeError.new "#{self.class} row2 is #{row2}, when must be between 1-8" if !row2.between?(1,8) 
+      return if @squares[col1-1][row1-1].nil?
+      remove_piece(col2, row2)
+      @squares[col1-1][row1-1].situate_directly(col2,row2)
+      @squares[col2-1][row2-1] = @squares[col1-1][row1-1]
+      @squares[col1-1][row1-1] = nil
+    end
+
+    def get_piece(col, row)
+      raise TypeError.new "#{self.class} col is #{col}, when must be between 1-8" if !col.between?(1,8) 
+      raise TypeError.new "#{self.class} row is #{row}, when must be between 1-8" if !row.between?(1,8) 
+      @squares[col-1][row-1]
+    end
+
     def initial_position
       #Setting pawns
-      (0..7).each do |col|
-        @squares[col][1] = Chess::Pawn.new(0,col+1,2)
-        @squares[col][6] = Chess::Pawn.new(1,col+1,7)
+      (1..8).each do |col|
+        spawn_new_piece('P',0,col,2)
+        spawn_new_piece('P',1,col,7)
       end
       #Setting figures
-        @squares[0][0] = Chess::Rook.new(0,1,1)
-        @squares[7][0] = Chess::Rook.new(0,8,1)
-        @squares[0][7] = Chess::Rook.new(1,1,8)
-        @squares[7][7] = Chess::Rook.new(1,8,8)
-        @squares[1][0] = Chess::Knight.new(0,2,1)
-        @squares[6][0] = Chess::Knight.new(0,7,1)
-        @squares[1][7] = Chess::Knight.new(1,2,8)
-        @squares[6][7] = Chess::Knight.new(1,7,8)
-        @squares[2][0] = Chess::Bishop.new(0,3,1)
-        @squares[5][0] = Chess::Bishop.new(0,6,1)
-        @squares[2][7] = Chess::Bishop.new(1,3,8)
-        @squares[5][7] = Chess::Bishop.new(1,6,8)
-        @squares[3][0] = Chess::Queen.new(0,4,1)
-        @squares[3][7] = Chess::Queen.new(1,4,8)
-        @squares[4][0] = Chess::King.new(0,4,1)
-        @squares[4][7] = Chess::King.new(1,4,8)
+      spawn_new_piece('R',0,1,1)
+      spawn_new_piece('R',0,8,1)
+      spawn_new_piece('R',1,1,8)
+      spawn_new_piece('R',1,8,8)
+      spawn_new_piece('N',0,2,1)
+      spawn_new_piece('N',0,7,1)
+      spawn_new_piece('N',1,2,8)
+      spawn_new_piece('N',1,7,8)
+      spawn_new_piece('B',0,3,1)
+      spawn_new_piece('B',0,6,1)
+      spawn_new_piece('B',1,3,8)
+      spawn_new_piece('B',1,6,8)
+      spawn_new_piece('Q',0,4,1)
+      spawn_new_piece('Q',1,4,8)
+      spawn_new_piece('K',0,5,1)
+      spawn_new_piece('K',1,5,8)
     end
 
     def draw_board
