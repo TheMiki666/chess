@@ -54,7 +54,7 @@ module Chess
     def move(col, row, board)
       return if !can_move?(col, row, board)
       @status = 1 
-      #TODO do movement
+      board.change_position(@col, @row, col, row)
     end
 
   end
