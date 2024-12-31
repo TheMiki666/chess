@@ -26,6 +26,15 @@ module Chess
       end
     end
 
+    def move(col, row, board)
+      return if !can_move?(col, row, board)
+      @status = 1 
+      @status = 2 if color == 0 and @row == 2 && row == 4
+      @status = 2 if color == 1 and @row == 7 && row == 5
+      board.change_position(@col, @row, col, row)
+      #TODO: implement en_passant capture in here?
+    end
+
     private
 
     def can_advance?(col, row, board)
