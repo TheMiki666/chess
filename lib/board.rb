@@ -9,7 +9,7 @@ require "colorize"
 
 module Chess
   class Board
-    attr_reader :squares
+    attr_reader :squares, :player_turn
 
     def initialize()
       clear_board
@@ -28,10 +28,16 @@ module Chess
       clear_log
       clear_board
       initial_position
-      @player = 0 
+      @player_turn = 0 
       @movement = 1
     end
 
+    #TESTED
+    def switch_turn
+      @player_turn = (@player_turn == 0 ? 1 : 0)
+    end
+
+    #TESTED
     def spawn_new_piece (piece, color, col, row)
       raise TypeError.new "#{self.class} piece is #{piece}, when must be 'K','Q','R','B','N' or 'P'"  if !piece.is_a?(String)
       piece = piece.upcase
@@ -56,6 +62,7 @@ module Chess
       @squares[col-1][row-1] = new_piece    
     end
 
+    #TESTED
     def remove_piece(col, row)
       raise TypeError.new "#{self.class} col is #{col}, when must be between 1-8" if !col.between?(1,8) 
       raise TypeError.new "#{self.class} row is #{row}, when must be between 1-8" if !row.between?(1,8) 
@@ -67,6 +74,7 @@ module Chess
       end
     end
 
+    #TESTED
     def change_position(col1, row1, col2, row2)
       raise TypeError.new "#{self.class} col1 is #{col1}, when must be between 1-8" if !col1.between?(1,8) 
       raise TypeError.new "#{self.class} row1 is #{row1}, when must be between 1-8" if !row1.between?(1,8) 
@@ -79,12 +87,14 @@ module Chess
       @squares[col1-1][row1-1] = nil
     end
 
+    #TESTED
     def get_piece(col, row)
       raise TypeError.new "#{self.class} col is #{col}, when must be between 1-8" if !col.between?(1,8) 
       raise TypeError.new "#{self.class} row is #{row}, when must be between 1-8" if !row.between?(1,8) 
       @squares[col-1][row-1]
     end
 
+    #TESTED
     def initial_position
       #Setting pawns
       (1..8).each do |col|
@@ -110,6 +120,7 @@ module Chess
       spawn_new_piece('K',1,5,8)
     end
 
+    #TESTED
     def draw_board
       puts
       puts "  | a | b | c | d | e | f | g | h |  "
@@ -130,7 +141,8 @@ module Chess
     end
 
     private
-
+      
+    #TESTED
     def paint_piece(piece)
       if piece.nil? || !piece.is_a?(Chess::Piece)
         print " "
