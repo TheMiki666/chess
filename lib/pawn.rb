@@ -20,7 +20,7 @@ module Chess
       if col == @col # Advance pawn
         can_advance?(col, row, board)
       elsif (col - @col ).abs == 1 # Adjacent cols => capturing
-        can_capture?(col, row, board)
+        can_do_a_capture?(col, row, board)
       else
         return false
       end
@@ -33,6 +33,19 @@ module Chess
       @status = 2 if color == 1 and @row == 7 && row == 5
       board.change_position(@col, @row, col, row)
       #TODO: implement en_passant capture in here?
+    end
+
+    #This method is just used in method Board#analize_check
+    #Overrides Piece#capture
+    #Doesn't need the board (doen't mind if the are other pieces)
+    def can_capture?(col, row, board=nil)
+      filter_square(col, row)
+      return false if (col - @col).abs != 1
+      if @color == 0
+        return row == @row + 1 
+      else #@color == 1
+        return row == @row - 1 
+      end
     end
 
     private
@@ -61,7 +74,7 @@ module Chess
       end
     end
 
-    def can_capture?(col, row, board)
+    def can_do_a_capture?(col, row, board)
       if @color == 0 
         if row == @row + 1
           if free_square?(col, row, board) == 'e'

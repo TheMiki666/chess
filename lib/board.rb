@@ -69,7 +69,6 @@ module Chess
       col -= 1
       row -= 1
       if @squares[col][row].is_a?(Chess::Piece)
-        @squares[col][row].be_captured
         @squares[col][row] = nil
       end
     end
@@ -92,6 +91,13 @@ module Chess
       raise TypeError.new "#{self.class} col is #{col}, when must be between 1-8" if !col.between?(1,8) 
       raise TypeError.new "#{self.class} row is #{row}, when must be between 1-8" if !row.between?(1,8) 
       @squares[col-1][row-1]
+    end
+
+    #TESTED
+    def set_piece(col, row, piece)
+      raise TypeError.new "#{self.class} col is #{col}, when must be between 1-8" if !col.between?(1,8) 
+      raise TypeError.new "#{self.class} row is #{row}, when must be between 1-8" if !row.between?(1,8) 
+      @squares[col-1][row-1] = piece
     end
 
     #TESTED
@@ -140,7 +146,54 @@ module Chess
       puts
     end
 
+    #TESTED
+    #This method is just used in test, not in production code
+    def visual_check_analysis(color)
+      puts
+      puts "  | a | b | c | d | e | f | g | h |  "
+      puts "--+---+---+---+---+---+---+---+---+--"
+      (1..8).each do |r| 
+        row = 9 - r
+        print row
+        print " | "
+        (1..8).each do |col|
+          if analize_check(col, row, color) == true
+            print "x".colorize(:red)
+          else
+            print " "
+          end
+          print " | "
+        end
+        puts row
+        puts "--+---+---+---+---+---+---+---+---+--"
+      end
+      puts "  | a | b | c | d | e | f | g | h |  "
+      puts
+    end
+
+    #TESTED 
+    # Returns true if the square is menaced by any figure of the color
+    def analize_check(col, row, color)
+      #We must remove temporally the piece on the row and col to analize if it is in check
+      piece = get_piece(col, row)
+      remove_piece(col, row) if !piece.nil?
+      check = analize_menace(col, row, color)
+      set_piece(col, row, piece) #Return the piece to its position
+      check
+    end
+
     private
+    def analize_menace(col, row, color)
+      (1..8).each do |x|
+        (1..8).each do |y|
+          piece = get_piece(x,y)
+          if !piece.nil? && piece.color == color && piece.can_capture?(col, row, self)
+            return true
+          end
+        end
+      end
+      false
+    end
       
     #TESTED
     def paint_piece(piece)

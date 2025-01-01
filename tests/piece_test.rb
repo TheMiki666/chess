@@ -26,13 +26,6 @@ puts my_piece.col
 puts my_piece.col_letter #all correct
 puts "-----"
 
-#Capturing my piece
-my_piece.be_captured
-puts my_piece.color
-puts my_piece.row
-puts my_piece.col
-puts my_piece.col_letter #all correct
-puts "-----"
 
 #Situate directly the piece on the board
 my_piece.situate_directly(5,2)

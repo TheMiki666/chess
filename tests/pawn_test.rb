@@ -289,4 +289,30 @@ describe Chess::Pawn do
       expect(pawn.can_move?(7, 2, board)).to be(true)
     end
   end
+
+  describe "Testing Pawn#can capture?" do
+    board = Chess::Board.new
+    board.spawn_new_piece('p', 1, 6, 3)
+    pawn_b= board.get_piece(6, 3)
+    board.spawn_new_piece('p', 0, 2, 5)
+    pawn_w= board.get_piece(2, 5)
+    it "White pawn could capture on (1, 6)" do
+      expect(pawn_w.can_capture?(1, 6)).to be(true)
+    end
+    it "White pawn could capture on (3, 6)" do
+      expect(pawn_w.can_capture?(3, 6)).to be(true)
+    end
+    it "Black pawn could capture on (5, 2)" do
+      expect(pawn_b.can_capture?(5, 2)).to be(true)
+    end
+    it "Black pawn could capture on (3, 2)" do
+      expect(pawn_b.can_capture?(7, 2)).to be(true)
+    end
+    it "Black pawn could not capture on (6, 2)" do
+      expect(pawn_b.can_capture?(6, 2)).to be(false)
+    end
+    it "Black pawn could not capture on (2, 6)" do
+      expect(pawn_w.can_capture?(2, 6)).to be(false)
+    end
+  end
 end

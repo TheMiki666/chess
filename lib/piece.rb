@@ -17,17 +17,16 @@ module Chess
       (@col + ORD_CONSTANT).chr
     end
 
-    def be_captured
-      @row = -1
-      @col = -1
-    end
-
     def can_move?(col, row, board)
       raise NotImplementedError.new "#{self.class} has not implemented method can_move?"
     end
 
     def move(col, row, board)
       raise NotImplementedError.new "#{self.class} has not implemented method move"
+    end
+
+    def can_capture?(col, row, board)
+      can_move?(col, row, board)
     end
 
     def situate_directly(col, row)
