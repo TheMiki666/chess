@@ -10,6 +10,10 @@ module Chess
       @status = 0 #0 = not moved yet, 1 = already moved, 2 = en_passant
     end
 
+    def get_kind
+      'P'
+    end
+
     def remove_en_passant
         @status = 1 if @status == 2
     end

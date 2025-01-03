@@ -4,6 +4,10 @@ require_relative "piece"
 module Chess
   class Knight < Chess::Piece
 
+    def get_kind
+      'N'
+    end
+
     def can_move?(col, row, board)
       filter_square(col, row)
       return false if !(((@col - col).abs == 2 && (@row - row).abs == 1) || ((@col - col).abs == 1 && (@row - row).abs == 2))
@@ -15,5 +19,6 @@ module Chess
       return if !can_move?(col, row, board)
       board.change_position(@col, @row, col, row)
     end
+
   end
 end

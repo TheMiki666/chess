@@ -11,6 +11,10 @@ module Chess
       @check = false
     end
 
+    def get_kind
+      'K'
+    end
+
     def can_move?(col, row, board)
       filter_square(col, row)
       return false if col == @col && row == @row  #Same square

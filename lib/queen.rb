@@ -4,6 +4,10 @@ require_relative "piece"
 module Chess
   class Queen < Chess::Piece
     
+    def get_kind
+      'Q'
+    end
+
     def can_move?(col, row, board)
       filter_square(col, row)
       return false if col == @col && row == @row  #Same square

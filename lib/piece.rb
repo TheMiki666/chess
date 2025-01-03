@@ -35,6 +35,10 @@ module Chess
       @row = row
     end
 
+    def get_kind
+      raise NotImplementedError.new "#{self.class} has not implemented method get_kind"
+    end
+
     protected 
 
     def filter_square(col, row)

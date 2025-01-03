@@ -10,6 +10,10 @@ module Chess
       @status = 0 #0 = not moved yet, 1 = already moved
     end
 
+    def get_kind
+      'R'
+    end
+
     def can_move?(col, row, board)
       filter_square(col, row)
       return false if col == @col && row == @row  #Same square

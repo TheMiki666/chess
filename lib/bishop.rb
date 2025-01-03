@@ -4,6 +4,10 @@ require_relative "piece"
 module Chess
   class Bishop < Chess::Piece
 
+    def get_kind
+      'B'
+    end
+
     def can_move?(col, row, board)
       filter_square(col, row)
       return false if col == @col && row == @row  #Same square
