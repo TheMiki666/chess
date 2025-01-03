@@ -59,23 +59,51 @@ module Chess
       objetive = @board.get_piece(c2, r2)
       return -2 if !objetive.nil? && objetive.color == @board.player_turn
       return -3 if !piece.can_move?(c2,r2, @board)
-      return -4 if is_king_in_check?(piece, objetive, c1, r1, c2, r2)
+      return -4 if leaves_king_in_check?(piece, objetive, c1, r1, c2, r2)
       #All is correct!
       return 1
     end
 
+    # TESTED
+    # Checks if any move the player does, leaves his king in check 
+    # MAYBE CAN BE REFACTORED
+    def is_stalemate?(color)
+      (1..8).each do |c1|
+        (1..8).each do |r1|
+          piece = @board.get_piece(c1,r1)
+          if !piece.nil? && piece.color == color
+            (1..8).each do |c2|
+              (1..8).each do |r2|
+                if piece.can_move?(c2, r2, @board)
+                  objetive = @board.get_piece(c2,r2)
+                  return false if !leaves_king_in_check?(piece, objetive, c1, r1, c2, r2)
+                end
+              end
+            end
+          end
+        end
+      end
+      true
+    end
+
     private 
 
-    def is_king_in_check?(piece, objetive, c1, r1, c2, r2)
+    #TESTED
+    def leaves_king_in_check?(piece, objetive, c1, r1, c2, r2)
       #We use copycat of the original piece to move it
       copycat = @board.spawn_new_piece(piece.get_kind, piece.color, c1, r1)
       @board.change_position(c1, r1, c2, r2)
-      king_position = find_king(@board.player_turn)
-      check = @board.analize_check(king_position[0], king_position[1], @board.player_turn==0?1:0)
+      check = is_king_in_check?(@board.player_turn)
       #Now we place back the pieces to the original positions and forget the copycat
       @board.set_piece(c1, r1, piece)
       @board.set_piece(c2, r2, objetive)
       check
+    end
+
+    #TESTED
+    def is_king_in_check?(color)
+      king_position = find_king(color)
+      @board.analize_check(king_position[0], king_position[1], color==0?1:0)
     end
 
     def find_king(color)
