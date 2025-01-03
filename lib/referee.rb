@@ -91,6 +91,45 @@ module Chess
     end
 
     #TESTED
+    def lack_of_power?(color)
+      army = count_pieces(color)
+      return false if army['Q'] > 0 || army['R'] > 0 || army['P'] > 0
+      return false if army['N'] > 1
+      return false if army['N'] == 1 && army ['B'] > 0
+      return false if army['BinW'] > 0 && army['BinB'] > 0
+      true
+    end
+
+    def count_pieces(color)
+      counter = {}
+      counter['K'] = 0
+      counter['Q'] = 0
+      counter['R'] = 0
+      counter['B'] = 0
+      counter['N'] = 0
+      counter['P'] = 0
+      counter['BinW'] = 0
+      counter['BinB'] = 0
+      # BinW = Bishop in white squares, BinW = Bishop in black squares, 
+      (1..8).each do |c|
+        (1..8).each do |r|
+          piece = @board.get_piece(c, r)
+          if !piece.nil? && piece.color == color
+            counter[piece.get_kind] += 1
+            if piece.get_kind == 'B'
+              if (c+r)%2 == 1 #white square
+                counter['BinW'] += 1
+              else #black square
+                counter['BinB'] += 1
+              end
+            end
+          end
+        end
+      end
+      counter
+    end
+
+    #TESTED
     def is_king_in_check?(color)
       king_position = find_king(color)
       @board.analize_check(king_position[0], king_position[1], color==0?1:0)
@@ -109,8 +148,6 @@ module Chess
       @board.set_piece(c2, r2, objetive)
       check
     end
-
-
 
     def find_king(color)
       (1..8).each do|y|
