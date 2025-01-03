@@ -4,9 +4,9 @@ require_relative('user_interface')
 module Chess
   # This class is complementary to board
   # It takes the user input, analices it, and declares valid or not valid
-  # It also analices if a player is in check, in check mate or in stalemate
-  # It also analices if there is another kind of draw (e.g., king vs king and bishop)
-  # It also analices the special rules of chess: pawn capture en passant, pawn promotion and castling
+  # It also analizes if a player is in check, in check mate or in stalemate
+  # It also analizes if there is another kind of draw (e.g., king vs king and bishop)
+  # It also analizes the special rules of chess: pawn capture en passant, pawn promotion and castling
   # It also controles the log
   class Referee
     COUNT_TO_DRAW = 100
@@ -86,6 +86,16 @@ module Chess
       true
     end
 
+    def is_check_mate?(color)
+      is_king_in_check?(color) && is_stalemate?(color)
+    end
+
+    #TESTED
+    def is_king_in_check?(color)
+      king_position = find_king(color)
+      @board.analize_check(king_position[0], king_position[1], color==0?1:0)
+    end
+
     private 
 
     #TESTED
@@ -100,11 +110,7 @@ module Chess
       check
     end
 
-    #TESTED
-    def is_king_in_check?(color)
-      king_position = find_king(color)
-      @board.analize_check(king_position[0], king_position[1], color==0?1:0)
-    end
+
 
     def find_king(color)
       (1..8).each do|y|
