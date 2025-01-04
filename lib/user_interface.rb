@@ -10,6 +10,10 @@ module Chess
       @game_manager = game_manager
     end
 
+    def warn_message(message)
+      puts message.colorize(:yellow)
+    end
+
     def error_message(message)
       puts message.colorize(:red)
     end
@@ -66,6 +70,8 @@ module Chess
         elsif input == 'load'
           puts "Calling load" #TODO: Replace for the function call
           answer = 0
+        elsif input == 'draw'
+          puts "Calling draw" #TODO: Replace for the function call
         elsif input == 'resign'
           puts "Calling resign" #TODO: Replace for the function call
         elsif input == 'quit'
@@ -95,6 +101,7 @@ module Chess
       puts "Enter 'load' to load a saved match."
       puts "Enter 'board' to see the board"
       puts "Enter 'log' to see the log of the match moves"
+      puts "Enter 'draw' to offer a draw to your opponent or claim it"
       puts "Enter 'resign' to resign the match"
       puts "Enter 'quit' to leave the program"
     end

@@ -10,12 +10,17 @@ module Chess
   # It also controles the log
   class Referee
     COUNT_TO_DRAW = 100
+    MANDATORY_DAW = -50
+    THREEFOLD_REPETITION = 3
+    FIVEFOLD_REPETITION = 5
+    ORD_CONSTANT = 96
     
     def initialize(board, user_interface)
       @board = board
       @ui = user_interface
       clear_log
       @board.clear_board
+      @previous_order = nil
     end
 
     def new_match
@@ -23,10 +28,111 @@ module Chess
       @board.new_match
       @movement = 0
       @movements_to_draw = COUNT_TO_DRAW
+      @previous_order = nil
     end
 
     def clear_log
       @log  = []
+    end
+
+    #TODO: maybe this loop must be managed by game manager
+    def game_loop
+      loop do
+        continue = turn_process
+        break if !continue
+      end
+    end
+
+    # This is the series of steps the Referee has to do each turn
+    # Return true if the match continues, false if it finishes
+    def turn_process
+      @board.draw_board
+
+      if !@previous_order.nil?
+        @previous_order.call
+        @previous_order = nil
+      end
+
+      #1 Player is in check_mate, stale_mate or check?
+      stalemate = is_stalemate?(@board.player_turn) #We don't use #is_checkmate? method, in order not to call #is_stalemate? twice
+                                              #which is a 4-nested loop
+      in_check = is_king_in_check?(@board.player_turn)
+      @ui.message("Movement number #{(@movement / 2) + 1}:") if !stalemate
+      if stalemate && in_check
+        check_mate
+        return false
+      elsif stalemate
+        manage_draw(1)
+        return false
+      elsif in_check
+        @ui.check_message
+      end
+
+      #2 Analyice other draw situations
+      # Insufficient material
+      # 75 rule
+      # Fivefold rule
+
+      #3 Ask for a movement, analize it and implement it if possible
+      movement = @ui.ask_for_movement
+      return false if movement == 0 #resign, offer/claim draw, quit
+      case analize_movement(movement)
+      when 1
+        #Normal legal movement
+        piece = @board.get_piece(movement[:col1],movement[:row1])
+        piece.move(movement[:col2],movement[:row2], @board)
+        #TODO: IMPLEMENTA REGISTRO (TIENES QUE VER SI ES UNA CAPTURA O NO)
+        #TODO: SI MUEVE UN PEÓN O CAPTURA, RESETEA EL MOVES TO DRAW
+        #TODO: ANALIZA EL THREEFOLD Y FIVEFOLD
+        @movement += 1
+        @board.switch_turn
+
+      when 2
+        #Short castling
+
+      when 3
+        #Long castling
+
+      when 4
+        #capture en passant
+
+      when 5
+        #pawn promotion
+
+      when 0
+        @previous_order = lambda {@ui.error_message("Square #{write_square(movement[:col1],movement[:row1])} is empty.")}
+      when -1
+        @previous_order = lambda {@ui.error_message("Square #{write_square(movement[:col1],movement[:row1])} is occupied by an enemy piece.")}
+      when -2
+        @previous_order = lambda {@ui.error_message("Square #{write_square(movement[:col2],movement[:row2])} is occupied by a piece of yours.")}
+      when -3
+        @previous_order = lambda {@ui.error_message("Your piece can not do that movement.")}
+      when -4
+        if in_check
+          @previous_order = lambda {@ui.error_message("That movement does not release you from the check.")}
+        else
+          @previous_order = lambda {@ui.error_message("That movement would leave you in check.")}
+        end
+      end
+
+      true
+    end
+
+    # 1 = Stalemate
+    # 2 = Insufficient material (lack of power)
+    # 3 = Mutual agreement
+    # 4 = 50 turns rule
+    # 5 = 75 turns rule
+    # 6 = Threefold
+    # 7 = Fivefold
+    def manage_draw(modality)
+      #TODO IMPLEMENT
+      @ui.warn_message("DRAW")
+    end
+
+    def check_mate
+      #TODO IMPLEMENT
+      @ui.mate_message
     end
 
     # Movement must be a hash parsed by the ui#parse_input, like this
@@ -86,6 +192,7 @@ module Chess
       true
     end
 
+    # only used in tests, not in the #turn_process
     def is_check_mate?(color)
       is_king_in_check?(color) && is_stalemate?(color)
     end
@@ -180,6 +287,10 @@ module Chess
           return [y,x] if @board.get_piece(y,x).is_a?(Chess::King) && @board.get_piece(y,x).color == color
         end
       end
+    end
+
+    def write_square(col, row)
+      "(#{(col + ORD_CONSTANT).chr}#{row})"
     end
   end
 end

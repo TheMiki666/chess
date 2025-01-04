@@ -11,6 +11,7 @@ ui.instructions #ok
 #p ui.ask_for_movement #Correctly tested
 ui.message("Awful movement!") #ok
 ui.error_message("Awful movement!") #ok
+ui.warn_message("Awful movement!") #ok
 ui.mate_message #ok
 ui.check_message #ok
 board.switch_turn
