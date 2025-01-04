@@ -100,6 +100,29 @@ module Chess
       true
     end
 
+    def draw_for_lack_of_power?
+      #Most frecuent situation
+      return false if !lack_of_power?(0) || !lack_of_power?(1)
+
+      #If one of the teams has a knight and the other has a knight or bishop, it's not draw
+      army1 = count_pieces(0)
+      army2 = count_pieces(1)
+      return false if army1['N'] > 0 && (army2['N'] > 0 || army2['B'] > 0)
+      return false if army2['N'] > 0 && (army1['N'] > 0 || army1['B'] > 0)
+
+      #Just bishops to analize
+      return true if army1['total'] == 1 && army2['total'] == 1  #Just both kings
+      #If both teams have just one bishop and both bishops are of the same color, it's a draw
+      if army1['BinB'] > 0 && army2['BinW'] > 0
+        false
+      elsif army1['BinW'] > 0 && army2['BinB'] > 0
+        false
+      else
+        true
+      end
+    end
+
+    #TESTED
     def count_pieces(color)
       counter = {}
       counter['K'] = 0
@@ -110,12 +133,14 @@ module Chess
       counter['P'] = 0
       counter['BinW'] = 0
       counter['BinB'] = 0
+      counter['total'] = 0
       # BinW = Bishop in white squares, BinW = Bishop in black squares, 
       (1..8).each do |c|
         (1..8).each do |r|
           piece = @board.get_piece(c, r)
           if !piece.nil? && piece.color == color
             counter[piece.get_kind] += 1
+            counter['total'] += 1
             if piece.get_kind == 'B'
               if (c+r)%2 == 1 #white square
                 counter['BinW'] += 1

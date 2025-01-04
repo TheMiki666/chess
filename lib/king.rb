@@ -3,12 +3,11 @@ require_relative "piece"
 
 module Chess
   class King < Chess::Piece
-    attr_reader :status, :check
+    attr_reader :status
 
     def initialize(color, col, row)
       super(color, col, row)
       @status = 0 #0 = not moved yet, 1 = already moved
-      @check = false
     end
 
     def get_kind

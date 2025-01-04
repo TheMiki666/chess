@@ -55,9 +55,18 @@ describe Chess::Referee do
     it "1 black bishop on black squares" do
       expect(b_counter['BinW']).to eq(1)
     end
+    it "total 16 white pieces" do
+      expect(w_counter['total']).to eq(16)
+    end
+    it "total 16 black pieces" do
+      expect(b_counter['total']).to eq(16)
+    end
+    it "No draw" do
+      expect(referee.draw_for_lack_of_power?).to be(false)
+    end
   end
 
-  describe "#count_pieces in the initial position" do
+  describe "#with some bishops" do
     board = Chess::Board.new
     referee = Chess::Referee.new(board, nil)
     referee.new_match
@@ -97,6 +106,15 @@ describe Chess::Referee do
     it "no white pawns" do
       expect(w_counter['P']).to eq(0)
     end
+    it "total 5 white pieces" do
+      expect(w_counter['total']).to eq(5)
+    end
+    it "total 5 black pieces" do
+      expect(b_counter['total']).to eq(5)
+    end
+    it "No draw" do
+      expect(referee.draw_for_lack_of_power?).to be(false)
+    end
   end
 
   describe "#lack of power?" do
@@ -113,6 +131,9 @@ describe Chess::Referee do
       end
       it "black can not win just with a king" do
         expect(referee.lack_of_power?(1)).to be(true)
+      end
+      it "It's a draw" do
+        expect(referee.draw_for_lack_of_power?).to be(true)
       end
     end
     describe "with powerful pieces" do
@@ -131,6 +152,9 @@ describe Chess::Referee do
       it "black can win with its queen" do
         expect(referee.lack_of_power?(1)).to be(false)
       end
+      it "No draw" do
+        expect(referee.draw_for_lack_of_power?).to be(false)
+      end
     end
     describe "with a pawn" do
       board = Chess::Board.new
@@ -146,6 +170,9 @@ describe Chess::Referee do
       end
       it "white can not win just with a king" do
         expect(referee.lack_of_power?(0)).to be(true)
+      end
+      it "No draw" do
+        expect(referee.draw_for_lack_of_power?).to be(false)
       end
     end
     describe "with low power pieces" do
@@ -164,8 +191,11 @@ describe Chess::Referee do
       it "white can not win with king and bishop" do
         expect(referee.lack_of_power?(0)).to be(true)
       end
+      it "No draw because the enemy piece can help" do
+        expect(referee.draw_for_lack_of_power?).to be(false)
+      end
     end
-      describe "with bishops in the same color" do
+      describe "each player with bishops in the same color" do
       board = Chess::Board.new
       referee = Chess::Referee.new(board, nil)
       referee.new_match
@@ -185,8 +215,11 @@ describe Chess::Referee do
       it "black has lack of power with all bishops on white squares" do
         expect(referee.lack_of_power?(0)).to be(true)
       end
+      it "No draw because enemy bishops are in the opposite color" do
+        expect(referee.draw_for_lack_of_power?).to be(false)
+      end
     end
-    describe "with bishops in different color" do
+    describe "a player with bishops in different color" do
       board = Chess::Board.new
       referee = Chess::Referee.new(board, nil)
       referee.new_match
@@ -198,6 +231,9 @@ describe Chess::Referee do
       board.draw_board
       it "black can win with a bishop in different color squares" do
         expect(referee.lack_of_power?(1)).to be(false)
+      end
+      it "No draw" do
+        expect(referee.draw_for_lack_of_power?).to be(false)
       end
     end
   end
@@ -218,6 +254,151 @@ describe Chess::Referee do
     end
     it "white can win with a bishop and a knight" do
       expect(referee.lack_of_power?(0)).to be(false)
+    end
+    it "No draw" do
+      expect(referee.draw_for_lack_of_power?).to be(false)
+    end
+  end
+  describe "each team with a knight" do
+    board = Chess::Board.new
+    referee = Chess::Referee.new(board, nil)
+    referee.new_match
+    board.clear_board
+    board.spawn_new_piece('K', 0, 5, 1)
+    board.spawn_new_piece('K', 1, 5, 8)
+    board.spawn_new_piece('N', 1, 2, 8)
+    board.spawn_new_piece('N', 0, 2, 1)
+    board.draw_board
+    it "black have lack of power" do
+      expect(referee.lack_of_power?(1)).to be(true)
+    end
+    it "white have lack of power" do
+      expect(referee.lack_of_power?(0)).to be(true)
+    end
+    it "But no draw because the enemy piece can help" do
+      expect(referee.draw_for_lack_of_power?).to be(false)
+    end
+  end
+  describe "one team with a knight and the other with a bishop" do
+    board = Chess::Board.new
+    referee = Chess::Referee.new(board, nil)
+    referee.new_match
+    board.clear_board
+    board.spawn_new_piece('K', 0, 5, 1)
+    board.spawn_new_piece('K', 1, 5, 8)
+    board.spawn_new_piece('N', 1, 2, 8)
+    board.spawn_new_piece('B', 0, 3, 1)
+    board.draw_board
+    it "black have lack of power" do
+      expect(referee.lack_of_power?(1)).to be(true)
+    end
+    it "white have lack of power" do
+      expect(referee.lack_of_power?(0)).to be(true)
+    end
+    it "But no draw because the enemy piece can help" do
+      expect(referee.draw_for_lack_of_power?).to be(false)
+    end
+  end
+  describe "each team with a bishop in opposite colors" do
+    board = Chess::Board.new
+    referee = Chess::Referee.new(board, nil)
+    referee.new_match
+    board.clear_board
+    board.spawn_new_piece('K', 0, 5, 1)
+    board.spawn_new_piece('K', 1, 5, 8)
+    board.spawn_new_piece('B', 1, 3, 8)
+    board.spawn_new_piece('B', 0, 3, 1)
+    board.draw_board
+    it "black have lack of power" do
+      expect(referee.lack_of_power?(1)).to be(true)
+    end
+    it "white have lack of power" do
+      expect(referee.lack_of_power?(0)).to be(true)
+    end
+    it "But no draw because the enemy piece can help" do
+      expect(referee.draw_for_lack_of_power?).to be(false)
+    end
+  end
+  describe "same situation than before, but changing square colors" do
+    board = Chess::Board.new
+    referee = Chess::Referee.new(board, nil)
+    referee.new_match
+    board.clear_board
+    board.spawn_new_piece('K', 0, 5, 1)
+    board.spawn_new_piece('K', 1, 5, 8)
+    board.spawn_new_piece('B', 1, 3, 7)
+    board.spawn_new_piece('B', 0, 3, 2)
+    board.draw_board
+    it "black have lack of power" do
+      expect(referee.lack_of_power?(1)).to be(true)
+    end
+    it "white have lack of power" do
+      expect(referee.lack_of_power?(0)).to be(true)
+    end
+    it "But no draw because the enemy piece can help" do
+      expect(referee.draw_for_lack_of_power?).to be(false)
+    end
+  end
+  describe "each team with various bishops, but all of them in same color" do
+    board = Chess::Board.new
+    referee = Chess::Referee.new(board, nil)
+    referee.new_match
+    board.clear_board
+    board.spawn_new_piece('K', 0, 5, 1)
+    board.spawn_new_piece('K', 1, 5, 8)
+    board.spawn_new_piece('B', 1, 1, 8)
+    board.spawn_new_piece('B', 1, 3, 8)
+    board.spawn_new_piece('B', 1, 7, 8)
+    board.spawn_new_piece('B', 0, 2, 1)
+    board.spawn_new_piece('B', 0, 4, 1)
+    board.spawn_new_piece('B', 0, 6, 1)
+    board.draw_board
+    it "black have lack of power" do
+      expect(referee.lack_of_power?(1)).to be(true)
+    end
+    it "white have lack of power" do
+      expect(referee.lack_of_power?(0)).to be(true)
+    end
+    it "Draw: bishops in same color are useless" do
+      expect(referee.draw_for_lack_of_power?).to be(true)
+    end
+  end
+  describe "king vs king and knight" do
+    board = Chess::Board.new
+    referee = Chess::Referee.new(board, nil)
+    referee.new_match
+    board.clear_board
+    board.spawn_new_piece('K', 0, 5, 1)
+    board.spawn_new_piece('K', 1, 5, 8)
+    board.spawn_new_piece('N', 1, 1, 8)
+    board.draw_board
+    it "black can not win" do
+      expect(referee.lack_of_power?(1)).to be(true)
+    end
+    it "white can not win" do
+      expect(referee.lack_of_power?(0)).to be(true)
+    end
+    it "It's a draw" do
+      expect(referee.draw_for_lack_of_power?).to be(true)
+    end
+  end
+  describe "king vs king and bishop" do
+    board = Chess::Board.new
+    referee = Chess::Referee.new(board, nil)
+    referee.new_match
+    board.clear_board
+    board.spawn_new_piece('K', 0, 5, 1)
+    board.spawn_new_piece('K', 1, 5, 8)
+    board.spawn_new_piece('B', 0, 1, 8)
+    board.draw_board
+    it "black can not win" do
+      expect(referee.lack_of_power?(1)).to be(true)
+    end
+    it "white can not win" do
+      expect(referee.lack_of_power?(0)).to be(true)
+    end
+    it "It's a draw" do
+      expect(referee.draw_for_lack_of_power?).to be(true)
     end
   end
 end
