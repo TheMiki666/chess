@@ -14,6 +14,11 @@ module Chess
       'R'
     end
 
+    #Use this method after castling or when spawning a new rook from pawn promotion
+    def forbid_castling
+      @status = 1
+    end
+
     def can_move?(col, row, board)
       filter_square(col, row)
       return false if col == @col && row == @row  #Same square

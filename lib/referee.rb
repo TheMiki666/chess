@@ -72,8 +72,11 @@ module Chess
       # Insufficient material
       # 75 rule
       # Fivefold rule
+  
+      #3 Remove all en_passant situations of the player
+      remove_all_en_passants(@board.player_turn)
 
-      #3 Ask for a movement, analize it and implement it if possible
+      #4 Ask for a movement, analize it and implement it if possible
       movement = @ui.ask_for_movement
       return false if movement == 0 #resign, offer/claim draw, quit
       case analize_movement(movement)
@@ -82,8 +85,13 @@ module Chess
         piece = @board.get_piece(movement[:col1],movement[:row1])
         piece.move(movement[:col2],movement[:row2], @board)
         #TODO: IMPLEMENTA REGISTRO (TIENES QUE VER SI ES UNA CAPTURA O NO)
-        #TODO: SI MUEVE UN PEÓN O CAPTURA, RESETEA EL MOVES TO DRAW
+        #TODO: SI MUEVE UN PEÓN O CAPTURA, RESETEA EL CONTADOR MOVES TO DRAW
         #TODO: ANALIZA EL THREEFOLD Y FIVEFOLD
+        if piece.is_a?(Chess::Pawn) 
+          if (movement[:row2] == 8 && @board.player_turn == 0) || (movement[:row2] == 1 && @board.player_turn == 1)
+            pawn_promotion(movement[:col2],@board.player_turn)
+          end
+        end
         @movement += 1
         @board.switch_turn
 
@@ -98,13 +106,15 @@ module Chess
 
       when 5
         #pawn promotion
-
+      
+      when -5
+        @previous_order = lambda {@ui.error_message("Both squares are the same: #{write_square(movement[:col1],movement[:row1])}.")}
       when 0
-        @previous_order = lambda {@ui.error_message("Square #{write_square(movement[:col1],movement[:row1])} is empty.")}
+        @previous_order = lambda {@ui.error_message("First square #{write_square(movement[:col1],movement[:row1])} is empty.")}
       when -1
-        @previous_order = lambda {@ui.error_message("Square #{write_square(movement[:col1],movement[:row1])} is occupied by an enemy piece.")}
+        @previous_order = lambda {@ui.error_message("First square #{write_square(movement[:col1],movement[:row1])} is occupied by an enemy piece.")}
       when -2
-        @previous_order = lambda {@ui.error_message("Square #{write_square(movement[:col2],movement[:row2])} is occupied by a piece of yours.")}
+        @previous_order = lambda {@ui.error_message("Second square #{write_square(movement[:col2],movement[:row2])} is occupied by a piece of yours.")}
       when -3
         @previous_order = lambda {@ui.error_message("Your piece can not do that movement.")}
       when -4
@@ -148,17 +158,14 @@ module Chess
     # -2 = Ilegal movement (square2 ocuppied by allied piece)
     # -3 = Ilegal movement (piece can not move to square2 - general)
     # -4 = Ilegal movement (leaves the king in check)
-    # -5 = Ilegal movement (castling with moved king)
-    # -6 = Ilegal movement (castling with moved rook)
-    # -7 = Ilegal movement (castling without free squares)
-    # -8 = Ilegal movement (castling from, to or passing by a check position)
-    # -9 = Ilegal movement (forbidden en_passant capture)
+    # -5 = Ilegal movement (same square)
     def analize_movement(movement)
       c1 = movement[:col1]
       r1 = movement[:row1]
       c2 = movement[:col2]
       r2 = movement[:row2]
 
+      return -5 if c1==c2 && r1==r2
       piece = @board.get_piece(c1, r1)
       return 0 if piece.nil?
       return -1 if piece.color!=@board.player_turn
@@ -268,6 +275,22 @@ module Chess
     end
 
     private 
+
+    def pawn_promotion(col, player)
+      row = (player == 0 ? 8 : 1)
+      election = @ui.ask_for_promotion
+      @board.spawn_new_piece(election, player, col, row)
+      @board.get_piece(col, row).forbid_castling if election == 'R'
+    end
+
+    def remove_all_en_passants(color)
+      (1..8).each do|y|
+        (1..8).each do |x|
+          piece = @board.get_piece(y,x)
+          piece.remove_en_passant if piece.is_a?(Chess::Pawn) && piece.color == color
+        end
+      end
+    end
 
     #TESTED
     def leaves_king_in_check?(piece, objetive, c1, r1, c2, r2)
