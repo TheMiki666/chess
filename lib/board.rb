@@ -66,11 +66,7 @@ module Chess
     def remove_piece(col, row)
       raise TypeError.new "#{self.class} col is #{col}, when must be between 1-8" if !col.between?(1,8) 
       raise TypeError.new "#{self.class} row is #{row}, when must be between 1-8" if !row.between?(1,8) 
-      col -= 1
-      row -= 1
-      if @squares[col][row].is_a?(Chess::Piece)
-        @squares[col][row] = nil
-      end
+      @squares[col-1][row-1] = nil
     end
 
     #TESTED

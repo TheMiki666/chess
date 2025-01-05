@@ -79,7 +79,7 @@ module Chess
       #4 Ask for a movement, analize it and implement it if possible
       movement = @ui.ask_for_movement
       return false if movement == 0 #resign, offer/claim draw, quit
-      case analize_movement(movement)
+      case analize_movement(movement, in_check)
       when 1
         #Normal legal movement
         piece = @board.get_piece(movement[:col1],movement[:row1])
@@ -96,16 +96,21 @@ module Chess
         @board.switch_turn
 
       when 2
-        #Short castling
+        #Castling
+        @board.get_piece(5,movement[:row1]).forbid_castling
+        @board.change_position(5,movement[:row1],movement[:col2],movement[:row2])
+        col1 = (movement[:col2] == 7 ? 8 : 1)
+        col2 = (movement[:col2] == 7 ? 6 : 4)
+        @board.get_piece(col1,movement[:row1]).forbid_castling
+        @board.change_position(col1,movement[:row1],col2,movement[:row2])
+        @movement += 1
+        @board.switch_turn
+        #TODO: IMPLEMENTA REGISTRO (TIENES QUE VER SI ES UNA CAPTURA O NO)
+        #TODO: SI MUEVE UN PEÓN O CAPTURA, RESETEA EL CONTADOR MOVES TO DRAW
+        #TODO: ANALIZA EL THREEFOLD Y FIVEFOLD
 
       when 3
-        #Long castling
-
-      when 4
         #capture en passant
-
-      when 5
-        #pawn promotion
       
       when -5
         @previous_order = lambda {@ui.error_message("Both squares are the same: #{write_square(movement[:col1],movement[:row1])}.")}
@@ -123,6 +128,20 @@ module Chess
         else
           @previous_order = lambda {@ui.error_message("That movement would leave you in check.")}
         end
+      when -10
+        @previous_order = lambda {@ui.error_message("You can not castle while being in check.")}
+      when -11
+        @previous_order = lambda {@ui.error_message("You can not castle because your King has moved already.")}
+      when -12
+        @previous_order = lambda {@ui.error_message("You can not castle because the rook has moved already.")}
+      when -13
+        @previous_order = lambda {@ui.error_message("You can not castle because the way to castle is not free.")}
+      when -14
+        @previous_order = lambda {@ui.error_message("You can not castle bacause your King would have to pass through a check.")}
+      when -15
+        @previous_order = lambda {@ui.error_message("You can not castle because you would leave your king in check.")}
+      when -16
+        @previous_order = lambda {@ui.error_message("You can not castle twice.")}
       end
 
       true
@@ -149,22 +168,22 @@ module Chess
     #{col1: 4, row1: 2, col2: 4, row2: 4}
     #Returns this code:
     # 1 = Legal movement (normal)
-    # 2 = Legal movement (short castling)
-    # 3 = Legal movement (long castling)
-    # 4 = Legal movement (capture en_passant)
-    # 5 = Legal movement (pawn promotion)
+    # 2 = Legal movement (castling)
+    # 3 = Legal movement (capture en_passant)
     # 0 = Ilegal movement (square1 empty)
     # -1 = Ilegal movement (square1 ocuppied by enemy piece)
     # -2 = Ilegal movement (square2 ocuppied by allied piece)
     # -3 = Ilegal movement (piece can not move to square2 - general)
     # -4 = Ilegal movement (leaves the king in check)
     # -5 = Ilegal movement (same square)
-    def analize_movement(movement)
+    # -10 to -16 = Ilegal castlings 
+    def analize_movement(movement, in_check)
       c1 = movement[:col1]
       r1 = movement[:row1]
       c2 = movement[:col2]
       r2 = movement[:row2]
 
+      return analize_castling(movement, in_check) if intends_to_castle?(movement)
       return -5 if c1==c2 && r1==r2
       piece = @board.get_piece(c1, r1)
       return 0 if piece.nil?
@@ -173,8 +192,10 @@ module Chess
       return -2 if !objetive.nil? && objetive.color == @board.player_turn
       return -3 if !piece.can_move?(c2,r2, @board)
       return -4 if leaves_king_in_check?(piece, objetive, c1, r1, c2, r2)
-      #All is correct!
+
+      #Correct normal movement
       return 1
+
     end
 
     # TESTED
@@ -276,6 +297,72 @@ module Chess
 
     private 
 
+    def intends_to_castle?(movement)
+      return true if movement[:castle] == true # Castle explicitly declared
+      return false if movement[:col1] != 5
+      return false if movement[:col2] != 3 && movement[:col2] != 7
+      if @board.player_turn == 0 #Player White
+        return false if movement[:row1] != 1 || movement[:row2] != 1
+        figure = @board.get_piece(5,1)
+        return false if !figure.is_a?(Chess::King) || figure.color != 0
+        return true #Implicit castling
+      else #Player Black
+        return false if movement[:row1] != 8 || movement[:row2] != 8
+        figure = @board.get_piece(5,8) 
+        return false if !figure.is_a?(Chess::King) || figure.color != 1
+        return true #Implicit castling
+      end
+    end
+
+    def analize_castling(movement, in_check)
+      return -16 if already_castled?
+      return -10 if in_check
+      row = (@board.player_turn == 0 ? 1 : 8)
+      return -11 if king_moved?(row)
+      return -12 if rook_moved?(movement[:col2],row)
+      return -13 if blocked_way_to_castle?(movement[:col2],row)
+      return -14 if castling_pass_through_check?(movement[:col2],row)
+      return -15 if castling_leaves_in_check?(movement[:col2],row)  
+      #Correct castling
+      return 2
+    end
+
+    def already_castled?
+      pos = find_king(@board.player_turn) 
+      return @board.get_piece(pos[0], pos[1]).status == 2
+    end
+
+    def king_moved?(row)
+      king = @board.get_piece(5,row)
+      return !king.is_a?(Chess::King) || king.color != @board.player_turn || king.status > 0
+    end
+
+    def rook_moved?(col, row)
+      col = (col == 7 ? 8 : 1)
+      rook = @board.get_piece(col,row)
+      return !rook.is_a?(Chess::Rook) || rook.color != @board.player_turn || rook.status > 0
+    end
+
+    def blocked_way_to_castle?(col, row)
+      if col == 7 #Short castling
+        return !(@board.get_piece(6, row).nil? && @board.get_piece(7, row).nil?)
+      else #long castling
+        return !(@board.get_piece(2, row).nil? && @board.get_piece(3, row).nil? && @board.get_piece(4, row).nil?)
+      end
+    end
+
+    def castling_pass_through_check?(col,row)
+      king = @board.get_piece(5,row)
+      c2 = (col == 7 ? 6 : 4)
+      leaves_king_in_check?(king, nil, 5, row, c2, row)
+    end
+
+    def castling_leaves_in_check?(col,row)
+      king = @board.get_piece(5,row)
+      leaves_king_in_check?(king, nil, 5, row, col, row)
+    end
+
+    #TESTED
     def pawn_promotion(col, player)
       row = (player == 0 ? 8 : 1)
       election = @ui.ask_for_promotion

@@ -141,32 +141,23 @@ module Chess
       return nil if !col1.between?(1,8) || !col2.between?(1,8) || !row1.between?(1,8) || !row2.between?(1,8)
       {col1: col1, row1: row1, col2: col2, row2: row2}
     end
-    #TESTED
+
+    # The user intends to castle explicitly
     def castling (mode)
       if @board.player_turn == 0
-        king = @board.get_piece(5,1)
-        if king.is_a?(Chess::King) && king.color == 0
-          if mode == 's'
-            {col1: 5, row1: 1, col2: 7, row2: 1}
-          else #'l'
-            {col1: 5, row1: 1, col2: 3, row2: 1}
-          end
-        else
-          nil
+        if mode == 's'
+          {col1: 5, row1: 1, col2: 7, row2: 1, castle: true}
+        else #'l'
+          {col1: 5, row1: 1, col2: 3, row2: 1, castle: true}
         end
       else #board.player_turn == 1
-        king = @board.get_piece(5,8)
-        if king.is_a?(Chess::King) && king.color == 1
-          if mode == 's'
-            {col1: 5, row1: 8, col2: 7, row2: 8}
-          else #'l'
-            {col1: 5, row1: 8, col2: 3, row2: 8}
-          end
-        else
-          nil
+        if mode == 's'
+          {col1: 5, row1: 8, col2: 7, row2: 8, castle: true}
+        else #'l'
+          {col1: 5, row1: 8, col2: 3, row2: 8, castle: true}
         end
-
       end
     end
+
   end
 end
