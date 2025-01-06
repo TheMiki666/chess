@@ -22,6 +22,10 @@ module Chess
       puts message
     end
 
+    def stalemate_message
+      puts ("Player #{player} is in stalemate!").colorize(:yellow)
+    end
+
     def check_message
       puts ("Player #{player}, you're in check!").colorize(:yellow)
     end

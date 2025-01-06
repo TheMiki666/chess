@@ -53,26 +53,30 @@ module Chess
         @previous_order = nil
       end
 
-      #1 Player is in check_mate, stale_mate or check?
+      #1 Player is in check_mate, stalemate, another draw situation or check?
+      # Other draw situations:
+      # Insufficient material
+      # 75 rule
+      # Fivefold rule
       stalemate = is_stalemate?(@board.player_turn) #We don't use #is_checkmate? method, in order not to call #is_stalemate? twice
                                               #which is a 4-nested loop
       in_check = is_king_in_check?(@board.player_turn)
-      @ui.message("Movement number #{(@movement / 2) + 1}:") if !stalemate
       if stalemate && in_check
         check_mate
         return false
       elsif stalemate
         manage_draw(1)
         return false
+      elsif draw_for_lack_of_power? #Insufficient material
+        manage_draw(2)
+        return false
       elsif in_check
         @ui.check_message
       end
+      
+      #2 Show number of movement
+      @ui.message("Movement number #{(@movement / 2) + 1}:")
 
-      #2 Analyice other draw situations
-      # Insufficient material
-      # 75 rule
-      # Fivefold rule
-  
       #3 Remove all en_passant situations of the player
       remove_all_en_passants(@board.player_turn)
 
@@ -109,6 +113,16 @@ module Chess
 
       when 3
         #Legal Capture en passant
+        @previous_order = lambda {@ui.message("Pawn captured en passant.")}
+        @board.change_position(movement[:col1],movement[:row1],movement[:col2],movement[:row2])
+        @board.remove_piece(movement[:col2], movement[:row1])
+        @movement += 1
+        @board.switch_turn
+        #TODO: IMPLEMENTA REGISTRO 
+        
+      when 0
+        @previous_order = lambda {@ui.error_message("First square #{write_square(movement[:col1],movement[:row1])} is empty.")}
+      when -1
         @previous_order = lambda {@ui.error_message("First square #{write_square(movement[:col1],movement[:row1])} is occupied by an enemy piece.")}
       when -2
         @previous_order = lambda {@ui.error_message("Second square #{write_square(movement[:col2],movement[:row2])} is occupied by a piece of yours.")}
@@ -138,7 +152,7 @@ module Chess
         @previous_order = lambda {@ui.error_message("You can only capture en passant if the adjacent pawn has moved two squares in the previous turn.")}
       end
 
-      true
+      true #This means that the match continues
     end
 
     # 1 = Stalemate
@@ -150,7 +164,13 @@ module Chess
     # 7 = Fivefold
     def manage_draw(modality)
       #TODO IMPLEMENT
-      @ui.warn_message("DRAW")
+      case modality
+      when 1
+        @ui.stalemate_message
+      when 2
+        @ui.warn_message ("None of the players have enought material to reach a checkmate.")
+      end
+      @ui.warn_message("Nobody wins. It's a draw.")
     end
 
     def check_mate
