@@ -8,6 +8,10 @@ require_relative "king"
 require "colorize"
 
 module Chess
+  #Is the object that contains the pieces
+  #It also controls the player turn and the number of movement (not the counter to draw)
+  #It also controls the TRUE LOG (the true series movements made before)
+  #It is the object which is going to be serialized when saving or loading the match
   class Board
     attr_reader :squares, :player_turn
 
@@ -21,7 +25,7 @@ module Chess
     end
 
     def clear_log
-      @log  = []
+      @true_log  = []
     end
 
     def new_match

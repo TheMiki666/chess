@@ -7,10 +7,10 @@ module Chess
   # It also analizes if a player is in check, in check mate or in stalemate
   # It also analizes if there is another kind of draw (e.g., king vs king and bishop)
   # It also analizes the special rules of chess: pawn capture en passant, pawn promotion and castling
-  # It also controles the log
+  # It also controles the FALSE log (the series of movements shown to the player)
   class Referee
     COUNT_TO_DRAW = 100
-    MANDATORY_DAW = -50
+    MANDATORY_DRAW = -50
     THREEFOLD_REPETITION = 3
     FIVEFOLD_REPETITION = 5
     ORD_CONSTANT = 96
@@ -27,12 +27,16 @@ module Chess
       clear_log
       @board.new_match
       @movement = 0
-      @movements_to_draw = COUNT_TO_DRAW
+      reset_counter
       @previous_order = nil
     end
 
+    def reset_counter
+      @movements_to_draw = COUNT_TO_DRAW
+    end
+
     def clear_log
-      @log  = []
+      @false_log = []
     end
 
     #TODO: maybe this loop must be managed by game manager
@@ -70,6 +74,9 @@ module Chess
       elsif draw_for_lack_of_power? #Insufficient material
         manage_draw(2)
         return false
+      elsif @movements_to_draw <= MANDATORY_DRAW && @board.player_turn == 0
+        manage_draw(3)
+        return false
       elsif in_check
         @ui.check_message
       end
@@ -85,19 +92,31 @@ module Chess
       return false if movement == 0 #resign, offer/claim draw, quit
       case analize_movement(movement, in_check)
       when 1
+        capture_or_pawn = false
         #Normal legal movement
         piece = @board.get_piece(movement[:col1],movement[:row1])
+        if !@board.get_piece(movement[:col2],movement[:row2]).nil?
+          #It's a capture
+          capture_or_pawn = true
+          #TODO: APUNTA EN EL REGISTRO FALSO ESTE MOVIMIENTO COMO UNA CAPTURA
+        end
         piece.move(movement[:col2],movement[:row2], @board)
         #TODO: IMPLEMENTA REGISTRO (TIENES QUE VER SI ES UNA CAPTURA O NO)
         #TODO: SI MUEVE UN PEÓN O CAPTURA, RESETEA EL CONTADOR MOVES TO DRAW
         #TODO: ANALIZA EL THREEFOLD Y FIVEFOLD
         if piece.is_a?(Chess::Pawn) 
+          capture_or_pawn = true
           if (movement[:row2] == 8 && @board.player_turn == 0) || (movement[:row2] == 1 && @board.player_turn == 1)
             pawn_promotion(movement[:col2],@board.player_turn)
           end
         end
         @movement += 1
         @board.switch_turn
+        if capture_or_pawn
+          reset_counter
+        else
+          @movements_to_draw -= 1
+        end
 
       when 2
         #Legal Castling
@@ -109,7 +128,8 @@ module Chess
         @board.change_position(col1,movement[:row1],col2,movement[:row2])
         @movement += 1
         @board.switch_turn
-        #TODO: IMPLEMENTA REGISTRO 
+        @movements_to_draw -= 1
+        #TODO: IMPLEMENTA REGISTRO
 
       when 3
         #Legal Capture en passant
@@ -118,7 +138,8 @@ module Chess
         @board.remove_piece(movement[:col2], movement[:row1])
         @movement += 1
         @board.switch_turn
-        #TODO: IMPLEMENTA REGISTRO 
+        reset_counter
+        #TODO: IMPLEMENTA REGISTRO; APÚNTALO COMO CAPTURA e.p.
         
       when 0
         @previous_order = lambda {@ui.error_message("First square #{write_square(movement[:col1],movement[:row1])} is empty.")}
@@ -157,11 +178,8 @@ module Chess
 
     # 1 = Stalemate
     # 2 = Insufficient material (lack of power)
-    # 3 = Mutual agreement
-    # 4 = 50 turns rule
-    # 5 = 75 turns rule
-    # 6 = Threefold
-    # 7 = Fivefold
+    # 3 = 75 turns rule
+    # 4 = Fivefold
     def manage_draw(modality)
       #TODO IMPLEMENT
       case modality
@@ -169,6 +187,9 @@ module Chess
         @ui.stalemate_message
       when 2
         @ui.warn_message ("None of the players have enought material to reach a checkmate.")
+      when 3
+        turns = (COUNT_TO_DRAW + MANDATORY_DRAW.abs) / 2
+        @ui.warn_message ("There has happend #{turns} consecutive turns without capturing a piece or moving a pawn.")
       end
       @ui.warn_message("Nobody wins. It's a draw.")
     end
