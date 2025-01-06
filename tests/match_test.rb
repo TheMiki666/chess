@@ -12,8 +12,8 @@ board.spawn_new_piece('K', 1, 5, 8)
 board.spawn_new_piece('K', 0, 5, 4)
 board.spawn_new_piece('Q', 0, 4, 4)
 
-board.spawn_new_piece('P', 1, 1, 7) #Uncomment this if you want to add a pawn
-board.spawn_new_piece('P', 0, 2, 2) #Uncomment this if you want to add a pawn
+#board.spawn_new_piece('P', 1, 1, 7) #Uncomment this if you want to add a pawn
+#board.spawn_new_piece('P', 0, 2, 2) #Uncomment this if you want to add a pawn
 
 #Uncomment this block to play Deletang method
 #board.clear_board

@@ -39,6 +39,15 @@ module Chess
       @false_log = []
     end
 
+    # Return = 0 no draw situation; players must accord it
+    # 1 = 50 movements rule
+    # 2 = Treefold
+    def get_draw_situation
+      #Return 2 if threefold
+      return 1 if @movements_to_draw < 0
+      return 0
+    end
+
     #TODO: maybe this loop must be managed by game manager
     def game_loop
       loop do
@@ -89,7 +98,7 @@ module Chess
 
       #4 Ask for a movement, analize it and implement it if possible
       movement = @ui.ask_for_movement
-      return false if movement == 0 #resign, offer/claim draw, quit
+      return false if movement == 1 #resign, offer/claim draw, quit
       case analize_movement(movement, in_check)
       when 1
         capture_or_pawn = false

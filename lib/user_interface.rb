@@ -75,7 +75,7 @@ module Chess
           puts "Calling load" #TODO: Replace for the function call
           answer = 0
         elsif input == 'draw'
-          puts "Calling draw" #TODO: Replace for the function call
+          answer = @game_manager.draw_requirement(@board.player_turn)
         elsif input == 'resign'
           puts "Calling resign" #TODO: Replace for the function call
         elsif input == 'quit'
@@ -126,6 +126,15 @@ module Chess
         else
           puts "Input not correct".colorize(:red)
         end
+      end
+    end
+
+    def yes_no
+      loop do
+        puts "(yes/no)?"
+        answer = gets.chomp.strip.downcase
+        return true if answer == "y" || answer == "yes"
+        return false if answer == "n" || answer == "no"
       end
     end
 
