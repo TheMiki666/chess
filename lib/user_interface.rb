@@ -109,7 +109,7 @@ module Chess
     # TESTED
     def ask_for_promotion
       loop do
-        puts "Player #{player}, one of your pawns has ".concat("promoted!").colorize(:green)
+        puts "Player #{player}, your pawn has ".concat("promoted!").colorize(:green)
         puts "Which piece do you want to promote to (Queen recommended)?"
         puts "'Q' = Queen, 'R' = Rook, 'B' = Bishop, 'N' = Knight"
         answer = gets.chomp.strip.upcase

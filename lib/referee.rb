@@ -96,7 +96,7 @@ module Chess
         @board.switch_turn
 
       when 2
-        #Castling
+        #Legal Castling
         @board.get_piece(5,movement[:row1]).forbid_castling
         @board.change_position(5,movement[:row1],movement[:col2],movement[:row2])
         col1 = (movement[:col2] == 7 ? 8 : 1)
@@ -105,18 +105,10 @@ module Chess
         @board.change_position(col1,movement[:row1],col2,movement[:row2])
         @movement += 1
         @board.switch_turn
-        #TODO: IMPLEMENTA REGISTRO (TIENES QUE VER SI ES UNA CAPTURA O NO)
-        #TODO: SI MUEVE UN PEÓN O CAPTURA, RESETEA EL CONTADOR MOVES TO DRAW
-        #TODO: ANALIZA EL THREEFOLD Y FIVEFOLD
+        #TODO: IMPLEMENTA REGISTRO 
 
       when 3
-        #capture en passant
-      
-      when -5
-        @previous_order = lambda {@ui.error_message("Both squares are the same: #{write_square(movement[:col1],movement[:row1])}.")}
-      when 0
-        @previous_order = lambda {@ui.error_message("First square #{write_square(movement[:col1],movement[:row1])} is empty.")}
-      when -1
+        #Legal Capture en passant
         @previous_order = lambda {@ui.error_message("First square #{write_square(movement[:col1],movement[:row1])} is occupied by an enemy piece.")}
       when -2
         @previous_order = lambda {@ui.error_message("Second square #{write_square(movement[:col2],movement[:row2])} is occupied by a piece of yours.")}
@@ -142,6 +134,8 @@ module Chess
         @previous_order = lambda {@ui.error_message("You can not castle because you would leave your king in check.")}
       when -16
         @previous_order = lambda {@ui.error_message("You can not castle twice.")}
+      when -20 
+        @previous_order = lambda {@ui.error_message("You can only capture en passant if the adjacent pawn has moved two squares in the previous turn.")}
       end
 
       true
@@ -177,12 +171,14 @@ module Chess
     # -4 = Ilegal movement (leaves the king in check)
     # -5 = Ilegal movement (same square)
     # -10 to -16 = Ilegal castlings 
+    # -20 = Ilegal en passant
     def analize_movement(movement, in_check)
       c1 = movement[:col1]
       r1 = movement[:row1]
       c2 = movement[:col2]
       r2 = movement[:row2]
 
+      return analize_en_passant(movement) if intends_to_capture_en_passant?(movement)
       return analize_castling(movement, in_check) if intends_to_castle?(movement)
       return -5 if c1==c2 && r1==r2
       piece = @board.get_piece(c1, r1)
@@ -297,6 +293,42 @@ module Chess
 
     private 
 
+    #TESTED
+    def intends_to_capture_en_passant?(movement)
+      return false if (movement[:col1]-movement[:col2]).abs != 1
+      my_pawn = @board.get_piece(movement[:col1], movement[:row1])
+      return false if !my_pawn.is_a?(Chess::Pawn) || my_pawn.color != @board.player_turn
+      if @board.player_turn ==0 #Player White
+        return false if movement[:row1] != 5 || movement[:row2] != 6
+        objective = @board.get_piece(movement[:col2], 5)
+        return objective.is_a?(Chess::Pawn) && objective.color == 1
+      else #Player Black
+        return false if movement[:row1] != 4 || movement[:row2] != 3
+        objective = @board.get_piece(movement[:col2], 4)
+        return objective.is_a?(Chess::Pawn) && objective.color == 0
+      end
+    end
+
+    #TESTED
+    # return = 3 if legal capture
+    # return = -20 if ilegal capture
+    def analize_en_passant(movement) 
+      pawn = @board.get_piece(movement[:col2], movement[:row1])
+      pawn.status == 2 ? 3 : -20
+    end
+
+    #TESTED
+    def remove_all_en_passants(color)
+      (1..8).each do|y|
+        (1..8).each do |x|
+          piece = @board.get_piece(y,x)
+          piece.remove_en_passant if piece.is_a?(Chess::Pawn) && piece.color == color
+        end
+      end
+    end
+
+
+    #TESTED
     def intends_to_castle?(movement)
       return true if movement[:castle] == true # Castle explicitly declared
       return false if movement[:col1] != 5
@@ -314,6 +346,7 @@ module Chess
       end
     end
 
+    #TESTED 
     def analize_castling(movement, in_check)
       return -16 if already_castled?
       return -10 if in_check
@@ -327,22 +360,26 @@ module Chess
       return 2
     end
 
+    #TESTED 
     def already_castled?
       pos = find_king(@board.player_turn) 
       return @board.get_piece(pos[0], pos[1]).status == 2
     end
 
+    #TESTED 
     def king_moved?(row)
       king = @board.get_piece(5,row)
       return !king.is_a?(Chess::King) || king.color != @board.player_turn || king.status > 0
     end
 
+    #TESTED 
     def rook_moved?(col, row)
       col = (col == 7 ? 8 : 1)
       rook = @board.get_piece(col,row)
       return !rook.is_a?(Chess::Rook) || rook.color != @board.player_turn || rook.status > 0
     end
 
+    #TESTED 
     def blocked_way_to_castle?(col, row)
       if col == 7 #Short castling
         return !(@board.get_piece(6, row).nil? && @board.get_piece(7, row).nil?)
@@ -351,12 +388,14 @@ module Chess
       end
     end
 
+    #TESTED 
     def castling_pass_through_check?(col,row)
       king = @board.get_piece(5,row)
       c2 = (col == 7 ? 6 : 4)
       leaves_king_in_check?(king, nil, 5, row, c2, row)
     end
 
+    #TESTED 
     def castling_leaves_in_check?(col,row)
       king = @board.get_piece(5,row)
       leaves_king_in_check?(king, nil, 5, row, col, row)
@@ -370,14 +409,6 @@ module Chess
       @board.get_piece(col, row).forbid_castling if election == 'R'
     end
 
-    def remove_all_en_passants(color)
-      (1..8).each do|y|
-        (1..8).each do |x|
-          piece = @board.get_piece(y,x)
-          piece.remove_en_passant if piece.is_a?(Chess::Pawn) && piece.color == color
-        end
-      end
-    end
 
     #TESTED
     def leaves_king_in_check?(piece, objetive, c1, r1, c2, r2)

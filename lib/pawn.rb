@@ -33,15 +33,14 @@ module Chess
     def move(col, row, board)
       return if !can_move?(col, row, board)
       @status = 1 
-      @status = 2 if color == 0 and @row == 2 && row == 4
-      @status = 2 if color == 1 and @row == 7 && row == 5
+      @status = 2 if @color == 0 && @row == 2 && row == 4
+      @status = 2 if @color == 1 && @row == 7 && row == 5
       board.change_position(@col, @row, col, row)
-      #TODO: implement en_passant capture in here?
     end
 
     #This method is just used in method Board#analize_check
     #Overrides Piece#capture
-    #Doesn't need the board (doen't mind if the are other pieces)
+    #Doesn't need the board (doesn't mind if the are other pieces)
     def can_capture?(col, row, board=nil)
       filter_square(col, row)
       return false if (col - @col).abs != 1
