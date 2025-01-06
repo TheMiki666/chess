@@ -16,6 +16,16 @@ module Chess
       @referee.new_match
     end
 
+    #TESTED
+    def print_log(true_log=false)
+      if true_log
+        @board.get_log.each {|entry| p entry} #For developers
+      else
+        @referee.print_log #Foru users
+      end
+    end
+
+    #TESTED
     def draw_requirement(player)
       player_name = (player == 0 ? "White" : "Black")
       case @referee.get_draw_situation

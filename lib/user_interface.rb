@@ -63,7 +63,7 @@ module Chess
         input = gets.chomp.strip.downcase
         puts
         if input == 'log'
-          puts "Calling log" #TODO: Replace for the function call
+          @game_manager.print_log(false) #Change false to true if you, developer, want to see the true log
           answer = 0
         elsif input == 'board'
           @board.draw_board

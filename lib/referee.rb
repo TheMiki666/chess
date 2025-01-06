@@ -39,6 +39,29 @@ module Chess
       @false_log = []
     end
 
+    def add_to_log(movement_description)
+      @false_log.push(movement_description)
+    end
+
+    def print_log
+      return if @false_log.size == 0
+      counter = 0
+      puts "     White       Black"
+      while counter < @false_log.size
+        number = (counter / 2) + 1
+        print " " if number < 10
+        print " " if number < 100
+        print "#{number}. "
+        print @false_log[counter]
+        (12 - @false_log[counter].length).times {print " "}
+        counter += 1
+        print @false_log[counter] if counter < @false_log.size
+        puts
+        counter += 1
+      end
+      puts
+    end
+
     # Return = 0 no draw situation; players must accord it
     # 1 = 50 movements rule
     # 2 = Treefold
@@ -75,6 +98,7 @@ module Chess
                                               #which is a 4-nested loop
       in_check = is_king_in_check?(@board.player_turn)
       if stalemate && in_check
+        @false_log[@movement-1] = @false_log[@movement-1].concat("++")
         check_mate
         return false
       elsif stalemate
@@ -87,6 +111,8 @@ module Chess
         manage_draw(3)
         return false
       elsif in_check
+        entry = @false_log[@movement-1]
+        entry = entry.concat("+") if entry[-1]!="+"
         @ui.check_message
       end
       
@@ -104,21 +130,28 @@ module Chess
         capture_or_pawn = false
         #Normal legal movement
         piece = @board.get_piece(movement[:col1],movement[:row1])
+        description = ""
+        description = piece.get_kind if !piece.is_a?(Chess::Pawn)
+        description = description.concat(write_square(movement[:col1],movement[:row1], true))
         if !@board.get_piece(movement[:col2],movement[:row2]).nil?
           #It's a capture
           capture_or_pawn = true
-          #TODO: APUNTA EN EL REGISTRO FALSO ESTE MOVIMIENTO COMO UNA CAPTURA
+          description = description.concat("x")
+        else
+          description = description.concat("-")
         end
         piece.move(movement[:col2],movement[:row2], @board)
-        #TODO: IMPLEMENTA REGISTRO (TIENES QUE VER SI ES UNA CAPTURA O NO)
-        #TODO: SI MUEVE UN PEÓN O CAPTURA, RESETEA EL CONTADOR MOVES TO DRAW
+        description = description.concat(write_square(movement[:col2],movement[:row2], true))
         #TODO: ANALIZA EL THREEFOLD Y FIVEFOLD
         if piece.is_a?(Chess::Pawn) 
           capture_or_pawn = true
           if (movement[:row2] == 8 && @board.player_turn == 0) || (movement[:row2] == 1 && @board.player_turn == 1)
-            pawn_promotion(movement[:col2],@board.player_turn)
+            movement[:promotion] = pawn_promotion(movement[:col2],@board.player_turn)
+            description = description.concat("=").concat(movement[:promotion])
           end
         end
+        add_to_log(description)
+        @board.add_to_log(movement)
         @movement += 1
         @board.switch_turn
         if capture_or_pawn
@@ -135,20 +168,22 @@ module Chess
         col2 = (movement[:col2] == 7 ? 6 : 4)
         @board.get_piece(col1,movement[:row1]).forbid_castling
         @board.change_position(col1,movement[:row1],col2,movement[:row2])
+        @board.add_to_log(movement)
+        add_to_log(movement[:col2] == 7 ? "O-O" : "O-O-O")
         @movement += 1
         @board.switch_turn
         @movements_to_draw -= 1
-        #TODO: IMPLEMENTA REGISTRO
 
       when 3
         #Legal Capture en passant
         @previous_order = lambda {@ui.message("Pawn captured en passant.")}
         @board.change_position(movement[:col1],movement[:row1],movement[:col2],movement[:row2])
         @board.remove_piece(movement[:col2], movement[:row1])
+        @board.add_to_log(movement)
+        add_to_log(write_square(movement[:col1],movement[:row1], true).concat("x").concat(write_square(movement[:col2],movement[:row2], true)).concat(" e.p."))
         @movement += 1
         @board.switch_turn
         reset_counter
-        #TODO: IMPLEMENTA REGISTRO; APÚNTALO COMO CAPTURA e.p.
         
       when 0
         @previous_order = lambda {@ui.error_message("First square #{write_square(movement[:col1],movement[:row1])} is empty.")}
@@ -200,6 +235,7 @@ module Chess
         turns = (COUNT_TO_DRAW + MANDATORY_DRAW.abs) / 2
         @ui.warn_message ("There has happend #{turns} consecutive turns without capturing a piece or moving a pawn.")
       end
+      @false_log[@movement-1] = @false_log[@movement-1].concat(" draw")
       @ui.warn_message("Nobody wins. It's a draw.")
     end
 
@@ -457,13 +493,14 @@ module Chess
       election = @ui.ask_for_promotion
       @board.spawn_new_piece(election, player, col, row)
       @board.get_piece(col, row).forbid_castling if election == 'R'
+      election
     end
 
 
     #TESTED
     def leaves_king_in_check?(piece, objetive, c1, r1, c2, r2)
       #We use copycat of the original piece to move it
-      copycat = @board.spawn_new_piece(piece.get_kind, piece.color, c1, r1)
+      @board.spawn_new_piece(piece.get_kind, piece.color, c1, r1)
       @board.change_position(c1, r1, c2, r2)
       check = is_king_in_check?(@board.player_turn)
       #Now we place back the pieces to the original positions and forget the copycat
@@ -480,8 +517,13 @@ module Chess
       end
     end
 
-    def write_square(col, row)
-      "(#{(col + ORD_CONSTANT).chr}#{row})"
+    def write_square(col, row, for_log=false)
+      if for_log
+        "#{(col + ORD_CONSTANT).chr}#{row}" #Without parenthesis
+      else
+        "(#{(col + ORD_CONSTANT).chr}#{row})" #With parenthesis
+      end
     end
+
   end
 end

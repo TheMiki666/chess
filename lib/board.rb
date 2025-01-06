@@ -28,6 +28,14 @@ module Chess
       @true_log  = []
     end
 
+    def get_log
+      @true_log
+    end
+
+    def add_to_log(movement)
+      @true_log.push(movement)
+    end
+
     def new_match
       clear_log
       clear_board
