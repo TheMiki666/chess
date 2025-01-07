@@ -26,6 +26,13 @@ module Chess
       @threefold = false
     end
 
+    #Use this method after loading a saved match
+    def update_board(logged_match)
+      new_match
+      logged_match.each {|movement| break if !turn_process(movement,true)}
+      #and now you should print the board, print the log or loop_game
+    end
+
     def new_match
       clear_log
       @board.new_match
@@ -85,11 +92,14 @@ module Chess
 
     # This is the series of steps the Referee has to do each turn
     # Return true if the match continues, false if it finishes
-    def turn_process
-      @board.draw_board
+    # updating = true means that the board is updating after loading a match
+    # automated_movement: is a movement[:col1][:row1][:col2][row2] read when updating the board, or given by the AI
+    # if it is nil, the movement is given by human user
+    def turn_process (automated_movement=nil, updating=false)
+      @board.draw_board if !updating
 
       if !@previous_order.nil?
-        @previous_order.call
+        @previous_order.call if !updating
         @previous_order = nil
       end
 
@@ -121,13 +131,19 @@ module Chess
       end
       
       #2 Show number of movement
-      @ui.message("Movement number #{(@movement / 2) + 1}:")
+      @ui.message("Movement number #{(@movement / 2) + 1}:") if !updating
 
       #3 Remove all en_passant situations of the player
       remove_all_en_passants(@board.player_turn)
 
       #4 Ask for a movement, analize it and implement it if possible
-      movement = @ui.ask_for_movement
+      if automated_movement.nil?
+        #human player
+        movement = @ui.ask_for_movement
+      else
+        movement = automated_movement
+      end
+      
       return false if movement == 1 #resign, offer/claim draw, quit
       case analize_movement(movement, in_check)
       when 1
@@ -150,7 +166,15 @@ module Chess
         if piece.is_a?(Chess::Pawn) 
           capture_or_pawn = true
           if (movement[:row2] == 8 && @board.player_turn == 0) || (movement[:row2] == 1 && @board.player_turn == 1)
-            movement[:promotion] = pawn_promotion(movement[:col2],@board.player_turn)
+            #pawn promotion
+            if automated_movement.nil?
+              movement[:promotion] = pawn_promotion(movement[:col2],@board.player_turn)
+            else
+              #automated promotion 
+              movement[:promotion] = 'Q' if movement[:promotion].nil?
+              @board.spawn_new_piece(movement[:promotion], @board.player_turn, movement[:col2], movement[:row2])
+              @board.get_piece(movement[:col2], movement[:row2]).forbid_castling if movement[:promotion] == 'R'
+            end
             description = description.concat("=").concat(movement[:promotion])
           end
         end
