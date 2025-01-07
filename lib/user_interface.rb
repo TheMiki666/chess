@@ -71,21 +71,18 @@ module Chess
         elsif input == 'save'
           puts "Calling save" #TODO: Replace for the function call
           answer = 0
-        elsif input == 'load'
-          puts "Calling load" #TODO: Replace for the function call
-          answer = 0
         elsif input == 'draw'
           answer = @game_manager.draw_requirement(@board.player_turn)
         elsif input == 'resign'
-          puts "Calling resign" #TODO: Replace for the function call
+          answer = @game_manager.resign_requirement(@board.player_turn)
         elsif input == 'quit'
-          puts "Calling quit" #TODO: Replace for the function call
+          answer = @game_manager.quit_requirement
         else
           answer = parse_input(input)
         end
         return answer if !answer.nil? && answer !=0 
         if answer.nil?
-          puts "Input not correct".colorize(:red)
+          puts "Input not correct.".colorize(:red)
           instructions
         end
       end
@@ -100,14 +97,13 @@ module Chess
       puts "...or check symbol:"
       puts "c1xd4+"
       puts "or even castling notation:"
-      puts "O-O or O-O-O" 
+      puts "O-O or O-O-O"
       puts "Enter 'save' to save the match."
-      puts "Enter 'load' to load a saved match."
-      puts "Enter 'board' to see the board"
-      puts "Enter 'log' to see the log of the match moves"
-      puts "Enter 'draw' to offer a draw to your opponent or claim it"
-      puts "Enter 'resign' to resign the match"
-      puts "Enter 'quit' to leave the program"
+      puts "Enter 'board' to see the board."
+      puts "Enter 'log' to see the log of the match moves."
+      puts "Enter 'draw' to offer a draw to your opponent or claim it."
+      puts "Enter 'resign' to resign the match."
+      puts "Enter 'quit' to leave the program."
     end
 
     # TESTED
@@ -129,9 +125,10 @@ module Chess
       end
     end
 
-    def yes_no
+    def yes_no(message)
       loop do
-        puts "(yes/no)?"
+        print message
+        puts "? (yes/no)"
         answer = gets.chomp.strip.downcase
         return true if answer == "y" || answer == "yes"
         return false if answer == "n" || answer == "no"

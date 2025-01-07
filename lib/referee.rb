@@ -14,6 +14,8 @@ module Chess
     THREEFOLD_REPETITION = 3
     FIVEFOLD_REPETITION = 5
     ORD_CONSTANT = 96
+
+    attr_accessor :threefold
     
     def initialize(board, user_interface)
       @board = board
@@ -21,6 +23,7 @@ module Chess
       clear_log
       @board.clear_board
       @previous_order = nil
+      @threefold = false
     end
 
     def new_match
@@ -71,11 +74,12 @@ module Chess
       return 0
     end
 
-    #TODO: maybe this loop must be managed by game manager
+    # returns 1 when finish the match but not the program
+    # returns -1 when finish the program
     def game_loop
       loop do
         continue = turn_process
-        break if !continue
+        return if !continue
       end
     end
 
@@ -236,11 +240,12 @@ module Chess
         @ui.warn_message ("There has happend #{turns} consecutive turns without capturing a piece or moving a pawn.")
       end
       @false_log[@movement-1] = @false_log[@movement-1].concat(" draw")
+      @board.add_to_log({end: true})
       @ui.warn_message("Nobody wins. It's a draw.")
     end
 
     def check_mate
-      #TODO IMPLEMENT
+      @board.add_to_log({end: true})
       @ui.mate_message
     end
 
