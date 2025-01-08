@@ -69,7 +69,7 @@ module Chess
           @board.draw_board
           answer = 0
         elsif input == 'save'
-          puts "Calling save" #TODO: Replace for the function call
+          @game_manager.save_match
           answer = 0
         elsif input == 'draw'
           answer = @game_manager.draw_requirement(@board.player_turn)
@@ -133,6 +133,59 @@ module Chess
         return true if answer == "y" || answer == "yes"
         return false if answer == "n" || answer == "no"
       end
+    end
+
+    # save = true means you want to save the match
+    # save = false means you want lo load the match
+    def ask_for_slot(save = false)
+      slots = @game_manager.read_slots
+      response = nil
+      loop do
+        if save
+          puts "Choose a number of slot to save:"
+          (0..9).each do |n|
+            if slots.include?(n)
+              puts n.to_s.concat(": occupied").colorize(:red)
+            else
+              puts n.to_s.concat(": free").colorize(:green)
+            end
+          end
+        else #load
+          puts "Choose a number of slot to load:"
+          (slots).each do |n| 
+            print n
+            print "  "
+          end
+           
+          puts
+        end
+
+        response=gets.chomp.strip.to_i
+        if response.nil?
+          puts "That's not a correct number"
+        else
+          if save
+            if slots.include?(response)
+              puts "That slot is occupied by another match."
+              if yes_no("Do you want to overwrite the slot")
+                break
+              else 
+                response = nil
+              end
+            else
+              break
+            end
+          else #load
+            if slots.include?(response)
+              break
+            else 
+              puts "That slot has not a saved match."
+              response = nil
+            end
+          end 
+        end
+      end
+      response
     end
 
     private

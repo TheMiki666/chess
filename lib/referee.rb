@@ -15,7 +15,7 @@ module Chess
     FIVEFOLD_REPETITION = 5
     ORD_CONSTANT = 96
 
-    attr_accessor :threefold
+    attr_accessor :threefold, :already_moved
     
     def initialize(board, user_interface)
       @board = board
@@ -39,6 +39,7 @@ module Chess
       @movement = 0
       reset_counter
       @previous_order = nil
+      @already_moved = false
     end
 
     def reset_counter
@@ -51,6 +52,10 @@ module Chess
 
     def add_to_log(movement_description)
       @false_log.push(movement_description)
+    end
+
+    def get_true_log
+      @board.get_log
     end
 
     def print_log
@@ -112,7 +117,8 @@ module Chess
                                               #which is a 4-nested loop
       in_check = is_king_in_check?(@board.player_turn)
       if stalemate && in_check
-        @false_log[@movement-1] = @false_log[@movement-1].concat("++")
+        entry = @false_log[@movement-1]
+        entry = entry.concat("++") if entry[-1]!="+"
         check_mate
         return false
       elsif stalemate
@@ -181,6 +187,7 @@ module Chess
         add_to_log(description)
         @board.add_to_log(movement)
         @movement += 1
+        @already_moved=true if !updating
         @board.switch_turn
         if capture_or_pawn
           reset_counter
@@ -199,6 +206,7 @@ module Chess
         @board.add_to_log(movement)
         add_to_log(movement[:col2] == 7 ? "O-O" : "O-O-O")
         @movement += 1
+        @already_moved=true if !updating
         @board.switch_turn
         @movements_to_draw -= 1
 
@@ -210,6 +218,7 @@ module Chess
         @board.add_to_log(movement)
         add_to_log(write_square(movement[:col1],movement[:row1], true).concat("x").concat(write_square(movement[:col2],movement[:row2], true)).concat(" e.p."))
         @movement += 1
+        @already_moved=true if !updating
         @board.switch_turn
         reset_counter
         
@@ -263,7 +272,8 @@ module Chess
         turns = (COUNT_TO_DRAW + MANDATORY_DRAW.abs) / 2
         @ui.warn_message ("There has happend #{turns} consecutive turns without capturing a piece or moving a pawn.")
       end
-      @false_log[@movement-1] = @false_log[@movement-1].concat(" draw")
+      entry = @false_log[@movement-1] 
+      entry.concat(" 1/2 - 1/2") if !entry.include?("1/2 - 1/2")
       @board.add_to_log({end: true})
       @ui.warn_message("Nobody wins. It's a draw.")
     end
