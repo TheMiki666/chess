@@ -142,27 +142,28 @@ module Chess
       response = nil
       loop do
         if save
-          puts "Choose a number of slot to save:"
-          (0..9).each do |n|
+          puts "Choose a number of slot to save ('C' to cancel):"
+          (1..9).each do |n|
             if slots.include?(n)
-              puts n.to_s.concat(": occupied").colorize(:red)
+              puts ("Slot #{n}: occupied").colorize(:red)
             else
-              puts n.to_s.concat(": free").colorize(:green)
+              puts ("Slot #{n}: free").colorize(:green)
             end
           end
         else #load
-          puts "Choose a number of slot to load:"
+          puts "Choose a number of slot to load ('C' to cancel):"
           (slots).each do |n| 
-            print n
-            print "  "
+            puts "Slot: #{n}".colorize(:green)
           end
            
           puts
         end
 
-        response=gets.chomp.strip.to_i
-        if response.nil?
-          puts "That's not a correct number"
+        response=gets.chomp.strip.downcase
+        return -1 if response =='c' || response == 'cancel'
+        response=response.to_i
+        if response.nil? || response < 1 || response > 9
+          puts "That's not a correct number of slot."
         else
           if save
             if slots.include?(response)

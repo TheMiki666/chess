@@ -43,7 +43,7 @@ module Chess
         base = String.new(DIR_PATH)
         base.concat("/").concat(FILE_PATH)
         slots = []
-        (0..9).each do |n|
+        (1..9).each do |n|
           path = String.new(base)
           path.concat(n.to_s).concat(EXTENSION_PATH)
           slots.push(n) if File.exist?(path)
@@ -58,6 +58,7 @@ module Chess
     # Return true if match could be loaded
     def load_match
       slot = @ui.ask_for_slot(false).to_s
+      return if slot == '-1'
       path = String.new(DIR_PATH).concat("/").concat(String.new(FILE_PATH)).concat(slot).concat(String.new(EXTENSION_PATH))
       begin
         log = JSON.parse(File.read(path))
@@ -73,6 +74,7 @@ module Chess
     # Return true if match could be saved
     def save_match
       slot = @ui.ask_for_slot(true).to_s
+      return if slot == '-1'
       log = @referee.get_true_log
       path = String.new(DIR_PATH).concat("/").concat(String.new(FILE_PATH)).concat(slot).concat(String.new(EXTENSION_PATH))
       json = JSON.generate(log)

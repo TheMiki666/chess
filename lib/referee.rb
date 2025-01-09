@@ -133,7 +133,7 @@ module Chess
       elsif in_check
         entry = @false_log[@movement-1]
         entry = entry.concat("+") if entry[-1]!="+"
-        @ui.check_message
+        @ui.check_message if !updating
       end
       
       #2 Show number of movement
